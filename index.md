@@ -7,7 +7,7 @@
 > Remote : nc 207.154.239.148 1369
 > 
 
-![Untitled](Harsh%20Sankhala%20e00405b9c8f449b9a1e1b44e6f19df08/Untitled.png)
+![Untitled](https://fzl-aws.notion.site/image/https%3A%2F%2Fprod-files-secure.s3.us-west-2.amazonaws.com%2F68ca7968-174f-4df4-ab04-3d91b871155c%2Fc7409795-8c60-4472-9627-bfd446a3a6b4%2FUntitled.png?table=block&id=4ed8f636-24e1-45f7-a739-c60bad815e19&spaceId=68ca7968-174f-4df4-ab04-3d91b871155c&width=1920&userId=&cache=v2)
 
 `source code`
 
@@ -231,7 +231,7 @@ p.close()
 > **Don't forget to run it along with the libc and binary in the same folder exploit.py is in**
 > 
 
-![carbon.png](Harsh%20Sankhala%20e00405b9c8f449b9a1e1b44e6f19df08/carbon.png)
+![carbon.png](https://fzl-aws.notion.site/image/https%3A%2F%2Fprod-files-secure.s3.us-west-2.amazonaws.com%2F68ca7968-174f-4df4-ab04-3d91b871155c%2F6a1d28b4-1c44-4b5c-b133-301e6aa25247%2Fcarbon.png?table=block&id=8dad3e6f-75d2-4e9c-8bab-86a32de9df60&spaceId=68ca7968-174f-4df4-ab04-3d91b871155c&width=1630&userId=&cache=v2)
 
 **Flag :** `ninja{why_d03s_m1ch3lle_pf3iff3r_sh0w_up_1n_rap?}`
 
@@ -278,7 +278,7 @@ This exploitation technique showcases classic heap exploitation strategies, such
 > **Remote : nc 207.154.239.148 1370**
 > 
 
-![Untitled](Harsh%20Sankhala%20e00405b9c8f449b9a1e1b44e6f19df08/Untitled%201.png)
+![Untitled](https://fzl-aws.notion.site/image/https%3A%2F%2Fprod-files-secure.s3.us-west-2.amazonaws.com%2F68ca7968-174f-4df4-ab04-3d91b871155c%2Fc1f895d3-27d2-4f43-9be4-287c3b75aafb%2FUntitled.png?table=block&id=69d719be-b091-4fbe-b345-dd7dc8ce8bca&spaceId=68ca7968-174f-4df4-ab04-3d91b871155c&width=1730&userId=&cache=v2)
 
 **Source Code**
 
@@ -498,7 +498,7 @@ p.close()
 $ python3 exploit.py REMOTE
 ```
 
-![Untitled](Harsh%20Sankhala%20e00405b9c8f449b9a1e1b44e6f19df08/Untitled%202.png)
+![Untitled](https://fzl-aws.notion.site/image/https%3A%2F%2Fprod-files-secure.s3.us-west-2.amazonaws.com%2F68ca7968-174f-4df4-ab04-3d91b871155c%2F9e24f86a-60d0-4828-8d93-8bd31e03aea7%2FUntitled.png?table=block&id=129397a3-a9bf-4819-a599-008635bc007f&spaceId=68ca7968-174f-4df4-ab04-3d91b871155c&width=2000&userId=&cache=v2)
 
 # Level3
 
@@ -614,7 +614,7 @@ p.interactive()
 p.close()
 ```
 
-![Untitled](Harsh%20Sankhala%20e00405b9c8f449b9a1e1b44e6f19df08/Untitled%203.png)
+![Untitled](https://fzl-aws.notion.site/image/https%3A%2F%2Fprod-files-secure.s3.us-west-2.amazonaws.com%2F68ca7968-174f-4df4-ab04-3d91b871155c%2Fe6823a4c-b4f6-400a-a0a3-dcf364f5ab72%2FUntitled.png?table=block&id=a56b1350-4bc4-4a4e-a487-cd041ed57970&spaceId=68ca7968-174f-4df4-ab04-3d91b871155c&width=1920&userId=&cache=v2)
 
 ```bash
 ninja{st4ying_4t_th3_double_fr33_h0t3l}
