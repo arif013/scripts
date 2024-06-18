@@ -32,9 +32,9 @@ pipx install git+https://github.com/Pennyw0rth/NetExec
 
 or use the static binaries from here
 
-[Untitled Database](NetExec%208a934ca18e734569910cf461cf66d845/Untitled%20Database%20c0c8952a3f9f4fbfb7793866c38d697b.csv)
+![](https://github.com/Pennyw0rth/NetExec/releases/tag/v1.2.0)
 
-![Untitled](NetExec%208a934ca18e734569910cf461cf66d845/Untitled%201.png)
+![Untitled](https://fzl-aws.notion.site/image/https%3A%2F%2Fprod-files-secure.s3.us-west-2.amazonaws.com%2F68ca7968-174f-4df4-ab04-3d91b871155c%2F86c8554e-eb40-4661-bc63-d150dfce070c%2FUntitled.png?table=block&id=527a21a7-3826-4e57-b2d8-dc817aa4ea99&spaceId=68ca7968-174f-4df4-ab04-3d91b871155c&width=2000&userId=&cache=v2)
 
 ## ASREP-Roasting
 
