@@ -1,0 +1,25 @@
+<div class="row">
+  <div class="col-lg-8 col-lg-offset-2">
+    <div class="menu">
+      <ul>
+        <span class="pag_title" style="font-family: monospace;">root@kali:~#</span>
+        <span style="color: #fff; font-family: monospace; font-weight: bold;">nc -nlvp 443</span>
+        <span class="blinking">_</span>
+        <style>
+        .blinking
+        {
+          animation:blinkingText 1.2s infinite;
+        }
+        @keyframes blinkingText
+        {
+          0%{     color: #fff;   }
+          49%{    color: #fff;     }
+          60%{    color: transparent; }
+          99%{    color: transparent; }
+          100%{   color: #fff;     }
+        }
+        </style>
+      </ul>
+    </div>
+  </div>
+</div>

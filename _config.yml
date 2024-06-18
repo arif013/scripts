@@ -1,0 +1,16 @@
+# Site settings
+title: "Scripts - HackTheBox"
+bye_message: "*ss*"
+baseurl: "/scripts/"
+url: "https://wackyhacker.github.io"
+disqus: wackyhacker
+
+# Header settings
+nick: "wackyhacker"
+source_code:
+    server: "github.com"
+    nick: "wackyhacker"
+
+# Build settings
+markdown: kramdown
+permalink: /:categories/:title/
