@@ -146,7 +146,7 @@ You are using 0/100 chunk addresses.
 
 `exploit.py`
 
-```bash
+```python
 #!/usr/bin/env python3
 
 from pwn import *
@@ -284,7 +284,7 @@ This exploitation technique showcases classic heap exploitation strategies, such
 
 `level2.c`
 
-```bash
+```c
 #include <stdio.h>
 #include <malloc.h>
 #include <stdlib.h>
@@ -406,7 +406,7 @@ int main(){
 
 ### **Exploit**
 
-```bash
+```python
 #!/usr/bin/env python3
 
 from pwn import *
@@ -507,7 +507,7 @@ $ python3 exploit.py REMOTE
 
 `exploit.py`
 
-```bash
+```python
 #!/usr/bin/env python3
 
 from pwn import *
@@ -624,7 +624,7 @@ ninja{st4ying_4t_th3_double_fr33_h0t3l}
 
 All in One
 
-```bash
+```python
 from pwn import *
 
 def level1():
