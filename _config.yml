@@ -1,15 +1,15 @@
 # Site settings
-title: "Scripts - HackTheBox"
+title: "Raj's Playground"
 bye_message: "*ss*"
 baseurl: "/scripts/"
-url: "https://wackyhacker.github.io"
-disqus: wackyhacker
+url: "https://Rajchowdhury420.github.io"
+disqus: Rajchowdhury420
 
 # Header settings
-nick: "wackyhacker"
+Raj: "Rajchowdhury420"
 source_code:
     server: "github.com"
-    nick: "wackyhacker"
+    Raj: "RajChowdhury420"
 
 # Build settings
 markdown: kramdown
