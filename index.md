@@ -2,7 +2,7 @@
 
 NetExec (a.k.a nxc) is a network service exploitation tool that helps automate assessing the security of *large* networks
 
-![Untitled](NetExec%208a934ca18e734569910cf461cf66d845/Untitled.png)
+![Untitled](https://fzl-aws.notion.site/image/https%3A%2F%2Fprod-files-secure.s3.us-west-2.amazonaws.com%2F68ca7968-174f-4df4-ab04-3d91b871155c%2F19f4e3f7-b83b-4304-8517-e85500a7ad64%2FUntitled.png?table=block&id=5bd1b66d-16fc-490e-9b9f-672233618e40&spaceId=68ca7968-174f-4df4-ab04-3d91b871155c&width=2000&userId=&cache=v2)
 
 NetExec can exploit multiple protocols like :
 
