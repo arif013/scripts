@@ -1,5 +1,3 @@
-# Harsh Sankhala
-
 # **Heap Pwn**
 
 ### Level 1
