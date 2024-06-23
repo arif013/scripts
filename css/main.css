@@ -19,31 +19,30 @@ code {
     background-color: #3c3b3b9e;
     border-radius: 4px;
 }
-
 h1 {
-  color: rgba(220, 0, 0, 0.8); /* Darker red */
+  color: rgba(255, 0, 0, 0.8); /* Bright red */
   font-size: 24px;
   font-family: monospace;
   font-weight: bold;
 }
 
-h2 { color: rgba(220, 0, 0, 0.7); }
-h3 { color: rgba(220, 0, 0, 0.6); }
-h4 { color: rgba(220, 0, 0, 0.5); }
-h5 { color: rgba(220, 0, 0, 0.4); }
-h6 { color: rgba(220, 0, 0, 0.3); }
+h2 { color: rgba(255, 0, 0, 0.7); }
+h3 { color: rgba(255, 0, 0, 0.6); }
+h4 { color: rgba(255, 0, 0, 0.5); }
+h5 { color: rgba(255, 0, 0, 0.4); }
+h6 { color: rgba(255, 0, 0, 0.3); }
 
 footer {
-    color: rgba(220, 0, 0, 0.8); /* Darker red */
+    color: rgba(255, 0, 0, 0.8); /* Bright red */
     font-weight: bold;
 }
 
 header {
-    color: rgba(220, 0, 0, 0.9); /* Darkest red */
+    color: rgba(255, 0, 0, 0.9); /* Bright red */
 }
 
 a {
-    color: rgba(220, 0, 0, 0.8); /* Darker red */
+    color: rgba(255, 0, 0, 0.8); /* Bright red */
 }
 .menu {
     border-top: 1px solid rgba(255,255,255,0.5);
