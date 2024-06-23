@@ -19,31 +19,33 @@ code {
     background-color: #3c3b3b9e;
     border-radius: 4px;
 }
+
 h1 {
-  color: rgba(255, 0, 0, 0.8); /* Bright red */
+  color: rgba(0, 255, 0, 0.8); /* Bright green */
   font-size: 24px;
   font-family: monospace;
   font-weight: bold;
 }
 
-h2 { color: rgba(255, 0, 0, 0.7); }
-h3 { color: rgba(255, 0, 0, 0.6); }
-h4 { color: rgba(255, 0, 0, 0.5); }
-h5 { color: rgba(255, 0, 0, 0.4); }
-h6 { color: rgba(255, 0, 0, 0.3); }
+h2 { color: rgba(0, 255, 0, 0.7); }
+h3 { color: rgba(0, 255, 0, 0.6); }
+h4 { color: rgba(0, 255, 0, 0.5); }
+h5 { color: rgba(0, 255, 0, 0.4); }
+h6 { color: rgba(0, 255, 0, 0.3); }
 
 footer {
-    color: rgba(255, 0, 0, 0.8); /* Bright red */
+    color: rgba(0, 255, 0, 0.8); /* Bright green */
     font-weight: bold;
 }
 
 header {
-    color: rgba(255, 0, 0, 0.9); /* Bright red */
+    color: rgba(0, 255, 0, 0.9); /* Bright green */
 }
 
 a {
-    color: rgba(255, 0, 0, 0.8); /* Bright red */
+    color: rgba(0, 255, 0, 0.8); /* Bright green */
 }
+
 .menu {
     border-top: 1px solid rgba(255,255,255,0.5);
     border-bottom: 1px solid rgba(255,255,255,0.5);
