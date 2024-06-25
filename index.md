@@ -1,61 +1,138 @@
-# ADCS to privesc from virtual and network service accounts to local system
+# AWS Data Perimeter Automation - Chowdhury Faizal Ahammed
 
-We will see how it is possible to elevate our privileges to NT AUTHORITY\SYSTEM from virtual and network service accounts of a domain-joined machine (for example from a webshell on a Windows server) using ADCS
+i have used boto3 for iam interractions, rich for terminal logging and csv module to write the output to a csv
 
-## ADCS 101
-### Public Key Infrastructure
-A PKI (Public Key Infrastructure) is an infrastructure used to create, manage, and revoke certificates as well as public/private keys.
+### The Script
 
-Active Directory Certificate Service (ADCS) is the Microsoft implementation of PKI infrastructure in an Active Directory/Windows environment. This service was added in Windows Server 2000, is easy to install and fully integrates itself with different Microsoft services. For example, here is a non exhaustive list of the different usages of PKI infrastructure:
+```py
+import boto3
+import json
+import csv
+from rich.progress import Progress
+from rich.table import Table
+from rich import print
+from rich.console import Console
+from time import time
 
-- TLS certificates (HTTPS / LDAPS / RDP)
-- Signing binaries, PowerShell scripts or even drivers
-- User authentication
-- File system encryption
-- Certificate templates
+def assume_role(account_id, role_name):
+    sts_client = boto3.client('sts')
+    role_arn = f"arn:aws:iam::{account_id}:role/{role_name}"
+    try:
+        assumed_role = sts_client.assume_role(
+            RoleArn=role_arn,
+            RoleSessionName="AssumeRoleSession"
+        )
+        return assumed_role['Credentials']
+    except sts_client.exceptions.ClientError as e:
+        print(f"[bold red]Failed to assume role {role_name} in account {account_id}: {str(e)}[/bold red]")
+        return None
 
-To simplify the creation of certificates in Active Directory, there are certificate templates.
+def update_trust_policy(iam_client, role_name, new_trust_policy_statement):
+    try:
+        current_policy = iam_client.get_role(RoleName=role_name)['Role']['AssumeRolePolicyDocument']
+    except iam_client.exceptions.NoSuchEntityException:
+        return False
 
-These templates are used to specify specific parameters and rights related to the certificate that will be issued from them. For example, in a certificate template we can set the following parameters:
+    if new_trust_policy_statement not in current_policy['Statement']:
+        current_policy['Statement'].append(new_trust_policy_statement)
+        try:
+            iam_client.update_assume_role_policy(
+                RoleName=role_name,
+                PolicyDocument=json.dumps(current_policy)
+            )
+            return True
+        except iam_client.exceptions.UnmodifiableEntityException:
+            return False
+    else:
+        return True
 
-- Period of validity
-- Who has the right to enroll
-- How we can use these certificates also called Extended Key Usage (EKU)
-By default, when the ADCS role is installed, different default templates are provided. One of them is the Machine template which can be requested by any machine account that is a member of the Domain Computers domain group:
-![](https://sensepost.com/img/pages/blog/2022/certpotato-using-adcs-to-privesc-from-virtual-and-network-service-accounts-to-local-system/Pasted-image-20221101195224.png)
+def process_roles_from_csv(file_path, new_trust_policy_statement):
+    with open(file_path, mode='r') as file:
+        csv_reader = csv.DictReader(file)
+        rows = list(csv_reader)
 
-Example of a template
-### Request a certificate
-A certificate request is always sent to the ADCS server. It is based on a template and requires authentication.
+    table = Table(title="Trust Policy Update Results")
+    table.add_column("Account ID")
+    table.add_column("Role Name")
+    table.add_column("Trust Policy Updated", style="cyan")
+    
+    results = []
+    
+    with Progress() as progress:
+        task = progress.add_task("[cyan]Processing...", total=len(rows))
+        
+        for row in rows:
+            account_id = row['AccountID']
+            role_name = row['RoleName']
+            
+            credentials = assume_role(account_id, role_name)
+            if not credentials:
+                result = {'AccountID': account_id, 'RoleName': role_name, 'TrustPolicyUpdated': 'Failed to Assume Role'}
+                results.append(result)
+                table.add_row(account_id, role_name, result['TrustPolicyUpdated'])
+                progress.update(task, advance=1)
+                continue
+            
+            iam_client = boto3.client(
+                'iam',
+                aws_access_key_id=credentials['AccessKeyId'],
+                aws_secret_access_key=credentials['SecretAccessKey'],
+                aws_session_token=credentials['SessionToken']
+            )
+            
+            if update_trust_policy(iam_client, role_name, new_trust_policy_statement):
+                result = {'AccountID': account_id, 'RoleName': role_name, 'TrustPolicyUpdated': 'True'}
+            else:
+                result = {'AccountID': account_id, 'RoleName': role_name, 'TrustPolicyUpdated': 'False'}
+            results.append(result)
+            table.add_row(account_id, role_name, result['TrustPolicyUpdated'])
+            progress.update(task, advance=1)
+    
+    print(table)
+    
+    with open('trust_policy_update_results.csv', mode='w', newline='') as file:
+        writer = csv.DictWriter(file, fieldnames=['AccountID', 'RoleName', 'TrustPolicyUpdated'])
+        writer.writeheader()
+        writer.writerows(results)
+    
+    console = Console()
+    console.print("[bold bright_red]Output saved as trust_policy_update_results.csv[/bold bright_red]")
 
-If the request is approved by the certification authority, then the certificate is delivered and usable in line with the EKUs defined in the template.
+new_trust_policy_statement = {
+    "Effect": "Deny",
+    "Principal": {
+        "AWS": "*"
+    },
+    "Action": [
+        "sts:AssumeRole",
+        "sts:AssumeRoleWithWebIdentity"
+    ],
+    "Condition": {
+        "StringNotEqualsIfExists": {
+            "aws:PrincipalOrgID": "o-vc3105qz5q",
+            "aws:PrincipalAccount": "012345678901"
+        },
+        "BoolIfExists": {
+            "aws:PrincipalIsAWSService": False
+        }
+    }
+}
 
-### User authentification (PKINIT)
-Kerberos supports asymmetric authentication, that is PKINIT authentication. Instead of encrypting the timestamp during pre-authentication (KRB_AS_REQ) with a password derivative (NT hash for RC4 encryption), it is possible to sign the timestamp with the private key associated with a valid certificate.
+start_time = time()
 
-However, for PKINIT authentication to be feasible there are several conditions, one of these conditions is that the obtained certificate must have one of the following 5 EKUs:
+process_roles_from_csv('input_roles.csv', new_trust_policy_statement)
 
-- Client Authentification
-- PKINIT Client Authentification
-- Smart Card Logon
-- Any Purpose
-- SubCA
+end_time = time()
+elapsed_time = end_time - start_time
 
-## Real Life Scenario from a Pentest
-we have three machines:
+console = Console()
+console.print(f"[bold bright_red]Script completed in {elapsed_time:.2f} seconds[/bold bright_red]")
+```
 
-- DC (192.168.1.1): the domain controller (Windows server 2022 fully updated) on which the certificate authority is also located
-- IIS (192.168.1.2): an application server (Windows server 2022 fully updated) on which the IIS service is installed
-- A Kali Linux machine (192.168.1.3)
+### Demo Output
+![](https://private-user-images.githubusercontent.com/30806882/341465202-4cfb05fc-ebd9-40ab-82bc-f9070e181e82.png?jwt=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmF3LmdpdGh1YnVzZXJjb250ZW50LmNvbSIsImtleSI6ImtleTUiLCJleHAiOjE3MTkzNDc2MzUsIm5iZiI6MTcxOTM0NzMzNSwicGF0aCI6Ii8zMDgwNjg4Mi8zNDE0NjUyMDItNGNmYjA1ZmMtZWJkOS00MGFiLTgyYmMtZjkwNzBlMTgxZTgyLnBuZz9YLUFtei1BbGdvcml0aG09QVdTNC1ITUFDLVNIQTI1NiZYLUFtei1DcmVkZW50aWFsPUFLSUFWQ09EWUxTQTUzUFFLNFpBJTJGMjAyNDA2MjUlMkZ1cy1lYXN0LTElMkZzMyUyRmF3czRfcmVxdWVzdCZYLUFtei1EYXRlPTIwMjQwNjI1VDIwMjg1NVomWC1BbXotRXhwaXJlcz0zMDAmWC1BbXotU2lnbmF0dXJlPTMyYjU2M2M0OTY2ODY2MTI2MjQzZTk5MDBkODEyMjUwYzg0MzEyM2Y2MDk2YmIwZjYzY2M2ZmZmYmYyYTgyMmMmWC1BbXotU2lnbmVkSGVhZGVycz1ob3N0JmFjdG9yX2lkPTAma2V5X2lkPTAmcmVwb19pZD0wIn0.hZBUK7Bmz8ECPyI-Isij6r4DbrEexrChuxE89-pzvyI)
 
-### We got intial foothold by RCE
-we have successfully uploaded a web shell on the IIS server. If we run the whoami command we can see the following result:
+### Output results in CSV
+![](https://private-user-images.githubusercontent.com/30806882/341466549-a3e5f03d-37e6-4ca8-af1b-3a96a9cca323.png?jwt=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmF3LmdpdGh1YnVzZXJjb250ZW50LmNvbSIsImtleSI6ImtleTUiLCJleHAiOjE3MTkzNDc2MzUsIm5iZiI6MTcxOTM0NzMzNSwicGF0aCI6Ii8zMDgwNjg4Mi8zNDE0NjY1NDktYTNlNWYwM2QtMzdlNi00Y2E4LWFmMWItM2E5NmE5Y2NhMzIzLnBuZz9YLUFtei1BbGdvcml0aG09QVdTNC1ITUFDLVNIQTI1NiZYLUFtei1DcmVkZW50aWFsPUFLSUFWQ09EWUxTQTUzUFFLNFpBJTJGMjAyNDA2MjUlMkZ1cy1lYXN0LTElMkZzMyUyRmF3czRfcmVxdWVzdCZYLUFtei1EYXRlPTIwMjQwNjI1VDIwMjg1NVomWC1BbXotRXhwaXJlcz0zMDAmWC1BbXotU2lnbmF0dXJlPTZlNDExM2MxZWU0ZGRhOTgzN2NkN2ZmOTA2ZmY0ZjNlYzAyOTViNzIwOWE0MTJjYTMxNTJjMjAwOTEzOWRiY2QmWC1BbXotU2lnbmVkSGVhZGVycz1ob3N0JmFjdG9yX2lkPTAma2V5X2lkPTAmcmVwb19pZD0wIn0.32WbfIHc-j1eGBCJWi2bLoOSXhZzMZm2vdKef8n6cwo)
 
-![](https://sensepost.com/img/pages/blog/2022/certpotato-using-adcs-to-privesc-from-virtual-and-network-service-accounts-to-local-system/Pasted-image-20221101133049.png)
-- By default the service account used is iis apppool\defaultaappool a Microsoft virtual account
-
-If we try to enumerate a remote share from our webshell:
-![](https://sensepost.com/img/pages/blog/2022/certpotato-using-adcs-to-privesc-from-virtual-and-network-service-accounts-to-local-system/Pasted-image-20221101131706.png)
-We will see that it is not the defaultapppool account that will try to authenticate to our server but the IIS$ machine account:
-![](https://sensepost.com/img/pages/blog/2022/certpotato-using-adcs-to-privesc-from-virtual-and-network-service-accounts-to-local-system/Pasted-image-20221101132146.png)
 
