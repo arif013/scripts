@@ -1,4 +1,6 @@
 # UAC Bypass 101
+<img width="1116" alt="image" src="https://github.com/Rajchowdhury420/scripts/assets/30806882/c4cf8ef7-40da-43d7-802d-2a40b5fb4f5c">
+
 Collection of one-liners to bypass User Account Control (UAC) in Windows. These techniques exploit certain behavior in Windows applications to elevate privileges.
 
 Techniques
